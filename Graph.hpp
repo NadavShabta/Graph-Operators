@@ -1,3 +1,5 @@
+// Nadav034@gmail.com
+
 #pragma once
 #include <vector>
 #include <iostream>
@@ -29,6 +31,7 @@ public:
     const std::vector<std::vector<int>>& getGraph() const;
     bool isGraphDirected();
     bool isGraphWeighted();
+    bool isGraphNegWeighted();
     int getNumberOfEdges() const;
     bool haveSameEdges(const Graph& graph1)const;
     bool isContainedIn(const Graph& other) const;
