@@ -65,6 +65,8 @@ The `Graph` class provides the following operators:
 
 5. **Graph Multiplication**
    - **Multiplication (`*`)**: Multiplies the adjacency matrices of two graphs.
+   - Multiplication Assignment (`*=`): Multiplies the weights of all edges by a scalar, modifying the graph in place.
+   - Division Assignment (`/=`): Divides the weights of all edges by a scalar, modifying the graph in place. Note: Division by zero is not allowed and will throw an exception.
 
 6. **Output Operator**
    - **Output (`<<`)**: Outputs the adjacency matrix of the graph to the stream.
