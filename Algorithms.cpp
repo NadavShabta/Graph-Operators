@@ -1,3 +1,5 @@
+// Nadav034@gmail.com
+
 #include "Algorithms.hpp"
 #include <queue>
 #include <limits>
@@ -5,9 +7,17 @@
 #include <string>
 #include <set>
 #include <sstream>
+#include <stack>
 
 using namespace std;
 // Depth-First Search utility for connectivity check
+/**
+ * Performs DFS to mark visited vertices for connectivity check.
+ *
+ * @param graph The graph to traverse.
+ * @param v The starting vertex.
+ * @param visited A vector to track visited vertices.
+ */
 void Algorithms::DFSUtil(const Graph& graph, int v, std::vector<bool>& visited) {
     visited[v] = true;
     const auto& matrix = graph.getGraph();
@@ -19,6 +29,12 @@ void Algorithms::DFSUtil(const Graph& graph, int v, std::vector<bool>& visited) 
 }
 
 // Function to check if the graph is connected
+/**
+ * Checks if the graph is connected.
+ *
+ * @param graph The graph to check.
+ * @return 1 if connected, 0 otherwise.
+ */
 int Algorithms::isConnected( Graph& graph) {
     if(graph.getIsEmpty()){
         cout<<"graph is empty"<<endl;
@@ -58,9 +74,42 @@ int Algorithms::isConnected( Graph& graph) {
     return 1; // Connected
 }
 
+// Function to relax edges in the graph
+/**
+ * Relaxes the edges of the graph to update distances and parents.
+ *
+ * @param g The graph.
+ * @param dist Distance vector.
+ * @param parent Parent vector.
+ */
+void Algorithms::relaxEdges(const Graph &g, std::vector<int> &dist, std::vector<int> &parent) {
+    int V = g.getVertexNum();
+    std::vector<std::vector<int>> matrix = g.getGraph();
+    const int INF = std::numeric_limits<int>::max();
+
+    for (int i = 1; i <= V - 1; ++i) {
+        for (int u = 0; u < V; ++u) {
+            for (int v = 0; v < V; ++v) {
+                if (matrix[u][v] != 0 && dist[u] != INF && dist[u] + matrix[u][v] < dist[v]) {
+                    dist[v] = dist[u] + matrix[u][v];
+                    parent[v] = u;
+                }
+            }
+        }
+    }
+}
+
 
 
 // Function to find the shortest path in an unweighted graph using BFS
+/**
+ * Finds the shortest path in an unweighted graph using BFS.
+ *
+ * @param graph The graph.
+ * @param start The start vertex.
+ * @param end The end vertex.
+ * @return A pair containing the shortest path length and the path itself.
+ */
 std::pair<int, std::vector<int>> Algorithms::bfsShortestPath(const Graph& graph, int start, int end) {
     int numVer = graph.getVertexNum();
     std::vector<int> distance(numVer, -1);
@@ -98,6 +147,14 @@ std::pair<int, std::vector<int>> Algorithms::bfsShortestPath(const Graph& graph,
 }
 
 // Function to find the shortest path in a weighted graph using Dijkstra's algorithm
+/**
+ * Finds the shortest path in a weighted graph using Dijkstra's algorithm.
+ *
+ * @param graph The graph.
+ * @param start The start vertex.
+ * @param end The end vertex.
+ * @return A pair containing the shortest path length and the path itself.
+ */
 std::pair<int, std::vector<int>> Algorithms::dijkstraShortestPath(const Graph& graph, int start, int end) {
     int numVer = graph.getVertexNum();
     std::vector<int> distance(numVer, std::numeric_limits<int>::max());
@@ -140,8 +197,79 @@ std::pair<int, std::vector<int>> Algorithms::dijkstraShortestPath(const Graph& g
     return {distance[end], path}; // Shortest path length and path
 }
 
+// Function to find the shortest path using Bellman-Ford algorithm
+/**
+ * Finds the shortest path using the Bellman-Ford algorithm.
+ *
+ * @param g The graph.
+ * @param start The start vertex.
+ * @param end The end vertex.
+ * @return A string representing the path or a negative cycle message.
+ */
+string Algorithms::bellmanFordShortestPath(const Graph &g, int start, int end) {
+    std::stringstream ss;
+    int vertexNum = g.getVertexNum();
+    const int INF = std::numeric_limits<int>::max();
+
+    if (vertexNum == 0 || start >= vertexNum || end >= vertexNum) {
+        return "-1";
+    }
+
+    std::vector<int> dist(vertexNum, INF);
+    std::vector<int> parent(vertexNum, -1);
+    dist[start] = 0;
+
+    // Relax all edges
+    relaxEdges(g, dist, parent);
+
+    // Check for negative weight cycles
+    for (int u = 0; u < vertexNum; ++u) {
+        for (int v = 0; v < vertexNum; ++v) {
+            int weight = g.getGraph()[u][v];
+            if (weight != 0 && dist[u] != INF && dist[u] + weight < dist[v]) {
+                // Negative weight cycle found
+                return "Negative cycle detected";
+            }
+        }
+    }
+
+    if (dist[end] == INF) {
+        return "-1"; // No path found
+    }
+
+    // Reconstruct the path
+    std::stack<int> path;
+    int currVertex = end;
+    while (currVertex != -1) {
+        path.push(currVertex);
+        currVertex = parent[currVertex];
+    }
+
+    // Print the path
+    while (!path.empty()) {
+        ss << path.top();
+        path.pop();
+        if (!path.empty()) {
+            ss << "->";
+        }
+    }
+    return ss.str();
+}
+
+// Function to find the shortest path based on graph type
+/**
+ * Finds the shortest path based on the graph type (unweighted, weighted, or negative weighted).
+ *
+ * @param graph The graph.
+ * @param start The start vertex.
+ * @param end The end vertex.
+ * @return A string representing the path or "-1" if no path is found.
+ */
 std::string Algorithms::shortestPath(Graph& graph, int start, int end) {
     std::pair<int, std::vector<int>> result;
+    if (graph.isGraphNegWeighted()){
+        return bellmanFordShortestPath(graph,start,end);
+    }
     if (graph.isGraphWeighted()) {
         result = dijkstraShortestPath(graph, start, end);
     } else {
@@ -155,6 +283,13 @@ std::string Algorithms::shortestPath(Graph& graph, int start, int end) {
     return formatPath(result.second);
 }
 
+// Helper function to format the path
+/**
+ * Formats the path as a string with "->" separators.
+ *
+ * @param path The path to format.
+ * @return The formatted path string.
+ */
 std::string Algorithms::formatPath(const std::vector<int>& path) {
     std::string formattedPath;
     for (size_t i = 0; i < path.size(); ++i) {
@@ -183,6 +318,16 @@ void Algorithms::printCycle(const std::vector<int>& parent, int start, int end) 
 }
 
 // DFS helper function for undirected graph
+/**
+ * DFS utility to detect a cycle in an undirected graph.
+ *
+ * @param v The current vertex.
+ * @param parent The parent vertex.
+ * @param graph The graph.
+ * @param visited The visited vector.
+ * @param parentVec The parent vector.
+ * @return True if a cycle is detected, false otherwise.
+ */
 bool Algorithms::DFSUtilUndirected(int v, int parent, const Graph& graph, std::vector<bool>& visited, std::vector<int>& parentVec) {
     visited[v] = true;
     parentVec[v] = parent; // Set the parent of the current node
@@ -204,6 +349,16 @@ bool Algorithms::DFSUtilUndirected(int v, int parent, const Graph& graph, std::v
 
 
 // DFS helper function for directed graph
+/**
+ * DFS utility to detect a cycle in a directed graph.
+ *
+ * @param v The current vertex.
+ * @param graph The graph.
+ * @param visited The visited vector.
+ * @param recStack The recursion stack vector.
+ * @param parentVec The parent vector.
+ * @return True if a cycle is detected, false otherwise.
+ */
 bool Algorithms::DFSUtilDirected(int v, const Graph& graph, std::vector<bool>& visited, std::vector<bool>& recStack, std::vector<int>& parentVec) {
     visited[v] = true;
     recStack[v] = true;
@@ -227,12 +382,13 @@ bool Algorithms::DFSUtilDirected(int v, const Graph& graph, std::vector<bool>& v
 }
 
 // Main function to detect and print a cycle
-string Algorithms::isContainsCycle(Graph& graph) {
+string Algorithms::isContainsCycle(const Graph& graph) {
     int numVer = graph.getVertexNum();
     std::vector<bool> visited(numVer, false);
     std::vector<int> parentVec(numVer, -1);
-
-    if (graph.isGraphDirected()) {
+    Graph g1;
+    g1.loadGraph(graph.getGraph());
+    if (g1.isGraphDirected()) {
         std::vector<bool> recStack(numVer, false);
         for (int v = 0; v < numVer; ++v) {
             if (!visited[v]) {
@@ -253,7 +409,14 @@ string Algorithms::isContainsCycle(Graph& graph) {
     return "0";
 }
 
-
+// Function to partition the graph into two sets based on colors
+/**
+ * Partitions the graph into two sets based on vertex colors.
+ *
+ * @param colors The color vector.
+ * @param partition1 Set 1 of vertices.
+ * @param partition2 Set 2 of vertices.
+ */
 void Algorithms::partitionGraph(const std::vector<int>& colors, std::vector<int>& partition1, std::vector<int>& partition2)  {
     for (size_t v = 0; v < colors.size(); ++v) {
         if (colors[v] == 0) {
@@ -264,6 +427,13 @@ void Algorithms::partitionGraph(const std::vector<int>& colors, std::vector<int>
     }
 }
 
+// Function to check if the graph is bipartite
+/**
+ * Checks if the graph is bipartite.
+ *
+ * @param graph The graph to check.
+ * @return A string indicating whether the graph is bipartite.
+ */
 
 std::string Algorithms::isBipartite(const Graph& graph)  {
     int numVer = graph.getVertexNum();
@@ -329,6 +499,12 @@ void Algorithms::printNegativeCycle(const std::vector<int>& parent, int start) {
     cout << endl;
 }
 
+// Function to detect and print negative cycles
+/**
+ * Detects and prints negative cycles using the Bellman-Ford algorithm.
+ *
+ * @param graph The graph to check.
+ */
 void Algorithms::negativeCycle(const Graph& graph) {
     int numVer = graph.getVertexNum();
     vector<int> dist(numVer, numeric_limits<int>::max());
@@ -371,6 +547,16 @@ void Algorithms::negativeCycle(const Graph& graph) {
 
     cout << "No negative cycle found." << endl;
 }
+
+// Helper function to validate a cycle
+/**
+ * Validates if the detected cycle is a true negative cycle.
+ *
+ * @param parent The parent vector.
+ * @param start The starting vertex of the cycle.
+ * @param graph The graph.
+ * @return True if the cycle is valid, false otherwise.
+ */
 bool Algorithms::isValidCycle(const vector<int>& parent, int start, const Graph& graph) {
     vector<int> cycle;
     int current = start;
