@@ -1,6 +1,5 @@
-//
-// Created by nadav on 7/4/2024.
-//
+// Nadav034@gmail.com
+
 #include "doctest/doctest.h"
 #include "Algorithms.hpp"
 #include <vector>
